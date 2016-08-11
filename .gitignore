@@ -1,0 +1,19 @@
+# IntelliJ IDEA project files and directories
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Build targets
+/target
+*/target
+
+# Mac-specific directory that no other operating system needs.
+.DS_Store
+
+# JVM crash logs
+hs_err_pid*.log
+
+# Generated Test files (10MB.file, 100MB.file, etc)
+*.file
+
