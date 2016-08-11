@@ -1,6 +1,6 @@
 # netty-buffers
 
-If my time with Netty has been a love story, ByteBuf pooling is the weird, awkward period of confusion that hopefully passes.
+Derek and Netty has been a love story, ByteBuf pooling is awkward period of confusion that hopefully passes.
 
 Usage:
 
