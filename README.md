@@ -7,12 +7,17 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * Explore PooledByteBufAllocation of direct memory. Pooled heap is analogous but out of scope.
 * Replicate behaviour where PoolChunk allocation fills available direct and further allocation OOMs.
 
-*Brief*:
+*A Netty Pooled Memory Primer*:
 
-* ByteBuf pooling is optional, direct memory is preferred where available. Not suitable for all scenarios.
-* Netty provides access to pooled memory via PoolArenas containing PoolChunks and Tiny/Small PoolSubpages (out of scope).
-* PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty.
-* The 
+* PooledByteBufAllocator is a jemalloc variant, introduced to counter GC pressure
+* Pooling is optional, direct memory is preferred where available. Not suitable for all scenarios
+* Netty provides access to pooled memory via PoolArenas containing PoolChunks and Tiny/Small PoolSubpages
+* PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty
+* Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
+* Means if each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
+* ThreadLocal cache of recently released buf and arena means:
+** Each thread only ever accesses the same arena
+** Some buffers are not deallocated from the arena on release, they're held in the cache for later use 
 
 *Usage*:
 
