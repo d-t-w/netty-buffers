@@ -1,8 +1,15 @@
-# netty-buffers
+# Netty Pool Arena Fragmentation 
 
 If Derek and Netty is a love story, ByteBuf pooling is the awkward period of confusion that hopefully passes
 
-Netty version: 4.1.0-CR3 (mostly because that's what Aleph has as a dependency (scenario 2)
+A had a scenario where the PoolChunks assigned to PoolArena would fill the available direct memory space, never be deallocated, and eventually cause OOM - either when a new PoolChunk is allocated, or when a hugeAllocation occurs. I have a reproducer for any version of netty below 4.0.37.Final (so this source uses 4.0.36-Final).
+
+Can no longer reproduce since 4.0.37.Final, fixed by either:
+
+https://github.com/netty/netty/pull/5333
+https://github.com/netty/netty/pull/5089 (more likely this one)
+
+see: "This then could have the effect that PoolChunks are not released / freed in a timely fashion"
 
 ## Goals
 
@@ -35,7 +42,7 @@ Netty version: 4.1.0-CR3 (mostly because that's what Aleph has as a dependency (
   * All allocation will be in the same PoolArena
   * Often only small number of buffers allocated since they are cached / re-used
 
-## Scenario 1
+## Scenario
 
  A long running netty HTTP service sporadically OOMs after several hundred days running in production
 
@@ -75,13 +82,6 @@ Netty version: 4.1.0-CR3 (mostly because that's what Aleph has as a dependency (
 *Questions*
 
 * Why do some PoolChunk fail to deallocate / linger on 1% usage?
-
-## Scenario 2
-
- Captured in this ticket related to Yada/Aleph: https://github.com/juxt/yada/issues/75
-
- Not related to my own issue, but I found the ticket when looking for other Pool/OOM issues
-
 
 ## Reproducing 
 
@@ -139,8 +139,6 @@ Generate files of varying size:
 ```bash
 dd if=/dev/zero of=100MB.file bs=1024k count=100   # 100MB
 ```
-
-## Reproducing Scenario 1
 
 A simple server configuaration (HttpCodec, HttpObjectAggregator, SimpleChannelHandler that drops msgs)
 
