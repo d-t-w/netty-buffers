@@ -14,12 +14,15 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * Netty provides access to pooled memory via PoolArenas containing PoolChunks and Tiny/Small PoolSubpages
 * PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty
 * Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
-* Means if each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
+* If each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
 * ThreadLocal cache of (some) recently released buf and arena means:
-  * Each thread only ever accesses the same arena
-  * Some buffers are not deallocated from the arena on release, they're held in the cache for later use 
+  * One thread only ever accesses the same PoolArena 
+  * Some buffers are not deallocated from the arena on release, ThreadLocal cached for later re-use 
 * Tiny, Small, and Normal sized allocations are all handled differently.
 * Huge allocations (larger than chunk size) are allocated in a special Unpooled PoolChunk
+
+* In normal operation with small messages it's hard to get more than 3 PoolChunk in one PoolArena
+* Generally PoolChunk and buffer allocation / deallocation is reliable
 
 Scenario:
 
@@ -29,15 +32,16 @@ Scenario:
 
 * HTTPObjectAggregator creates a CompositeByteBuffer with component buffers of 8192 bytes (default)
 * CompositeByteBuffer consolidate at every 1024 component parts (default)
-* Leads to large messages generating a series of small allocations and occasional 8MB allocation
+* Leads to large messages generating a series of small allocations and occasional 8MB and larger
 * Deallocation occurs asynchronously, a burst of large messages can lead to high allocation contention
-* The 8MB large allocations lead to new PoolChunk being allocated, as none have capacity available
+* The 8MB large allocations can lead to new PoolChunk being allocated when none existing have capacity 
+* Larger aggregated buffers are allocated via allocateHuge which is unpooled
 * Can lead to PoolArenas having more than 3 PoolChunk allocated, approaching 100% use by all PoolChunks
 * Appears that some PoolChunk are not deallocated, not sure why but perhaps:
   * Some buffers are cached in the threadlocal, not deallocated (see a lot of PoolChunk w/ 1% usage)
   * Perhaps under constant load all PoolChunk are in use with new requests, not sure how chunks preferred
-* OOM generally (95%) occurs at huge allocation, unpooled Chunk fails because pooled Chunks consume 100%   
-* OOM occasionally (5%) occurs at point of new Chunk allocation, all memory consumed already
+* OOM generally (95%) occurs at huge allocation, unpooled Chunk fails when existing  pooled consume 100%   
+* OOM occasionally (5%) occurs at point of new Chunk allocation when all memory consumed already
 * Direct memory consumption confirmed by JVisualVM + Buffer Pools plugin
 
 *Usage*:
