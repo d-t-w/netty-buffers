@@ -353,6 +353,8 @@ Given that:
 
 At this point we observe the symptom of intermittent OOM since small messages are handled perfectly well by the existing pool chunks, but anything big enough to trigger a new allocation fails.
 
+Granted, you might not expect a service contrained to 256MB of direct memory to support 20MB messages. My production servers have 2GB. This reproducer isn't intended to be perfectly representative, in my case the issue with memory consumption is as much related to slow peers / backpressure as large messages. However I am interested to understand why this example demonstrates an ever increasing number of PoolChunk that are never deallocated, as that ever (even slowly) increasing consumption of memory space appears to be the key to my actual issue.
+
 ## License
 
 Copyright © 2016 FIXME
