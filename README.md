@@ -213,6 +213,11 @@ Check the PoolArena metrics
           "]]
 ```
 
+You can see that each Arena only has a single chunk, with very memory consumed
+
+My assumption is the 1% consumption represents buffers that are not deallocated on release, rather they are cached in the ThreadLocal for later re-use.
+
+Regardless if you send 10000 or 1M <100KB messages, the PoolArena metrics will look similar to above. Nice and orderly, no accumulation of chunks, very little memory consumed.
 
 
 ## License
