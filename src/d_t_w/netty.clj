@@ -21,16 +21,18 @@
           (-> (.writeAndFlush ctx (DefaultHttpResponse. HttpVersion/HTTP_1_1 HttpResponseStatus/OK))
               (.addListener ChannelFutureListener/CLOSE))
           (prn (str "complete: " @chunks " chunks, " @request-size " bytes"))))
-      (exceptionCaught [^ChannelHandlerContext ctx  _]
-        (.close ctx))
+      (exceptionCaught [^ChannelHandlerContext ctx thr]
+        (.printStackTrace thr)
+        (-> (.writeAndFlush ctx (DefaultHttpResponse. HttpVersion/HTTP_1_1 HttpResponseStatus/INTERNAL_SERVER_ERROR))
+            (.addListener ChannelFutureListener/CLOSE)))
       (isSharable [] true))))
 
 (defn start!
   ([]
-   (start! [false]))
+   (start! true))
   ([aggregate?]
    (-> (ServerBootstrap.)
-       (.group (NioEventLoopGroup.))
+       (.group (NioEventLoopGroup. 2))
        (.channel NioServerSocketChannel)
        (.localAddress (InetSocketAddress. (int 3000)))
        (.childOption ChannelOption/ALLOCATOR PooledByteBufAllocator/DEFAULT)
@@ -41,9 +43,9 @@
                                           ChannelHandler
                                           (if aggregate?
                                             [(HttpServerCodec. 4098 8196 8196)
+                                             (HttpObjectAggregator. Integer/MAX_VALUE)
                                              (->dropping-handler)]
                                             [(HttpServerCodec. 4098 8196 8196)
-                                             (HttpObjectAggregator. Integer/MAX_VALUE)
                                              (->dropping-handler)])))))))
        (.bind)
        (.sync))

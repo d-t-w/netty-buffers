@@ -2,6 +2,8 @@
 
 If Derek and Netty is a love story, ByteBuf pooling is the awkward period of confusion that hopefully passes
 
+Netty version: 4.1.0-CR3 (mostly because that's what Aleph has as a dependency (scenario 2)
+
 ## Goals
 
 * Explore PooledByteBufAllocation of direct memory. Pooled heap is analogous but out of scope
@@ -22,8 +24,9 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
 * If each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
 * ThreadLocal cache of (some) recently released buf and arena means:
-  * One thread only ever accesses one PoolArena 
-  * Some buffers are not deallocated from the arena on release, ThreadLocal cached for later re-use 
+  * One event-loop thread only ever accesses one PoolArena 
+  * Some buffers are not deallocated from the arena on release, ThreadLocal cached for later re-use
+  * If you have fewer event-loop threads than PoolArena, some arena are not utilized 
 * Tiny, Small, and Normal sized allocations are all handled differently
 * Huge allocations (larger than chunk size) are allocated in a special Unpooled PoolChunk
 * In normal operation with small messages it's hard to get more than 3 PoolChunk in one PoolArena
@@ -84,13 +87,13 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 
 ## Reproducing 
 
-Start a REPL with max direct memory setting (to control the number of PoolArena)
+Start a REPL with max direct memory setting (to control the number of PoolArenas)
 
 ```bash
 -XX:MaxDirectMemorySize=256M  # with default settings = two PoolArena
 ```
 
-Confirm the direct pool arena metrics
+Confirm the direct pool arena metrics (arenas are grouped by utilisation %) 
 
 ```clojure
 (.directArenas (PooledByteBufAllocator/DEFAULT))
@@ -131,7 +134,7 @@ Confirm the direct pool arena metrics
           "]]
 ```
 
-You can see, they're empty.
+You can see all the PoolArena have zero PoolChunks at this point.
 
 Generate files of varying size:
 
@@ -139,6 +142,25 @@ Generate files of varying size:
 dd if=/dev/zero of=100MB.file bs=1024k count=100   # 100MB
 ```
 
+## Reproducing Scenario 1
+
+A simple server configuaration (HttpCodec, HttpObjectAggregator, SimpleChannelHandler that drops msgs)
+
+```clojure
+(require '[d-t-w.netty :as netty])
+=> nil
+(netty/start!)
+=> {:port 3000}
+```
+
+To verify expected 'normal' pool operation, send a series of 100k msgs to the server
+
+```bash
+± % for run in {1..1000}                                                                                                                                                                             !10594
+do
+  curl -X PUT --data-binary "@100KB.file" 127.0.0.1:3000
+done
+```
 
 ## License
 
