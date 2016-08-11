@@ -15,9 +15,30 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty
 * Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
 * Means if each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
-* ThreadLocal cache of recently released buf and arena means:
+* ThreadLocal cache of (some) recently released buf and arena means:
   * Each thread only ever accesses the same arena
   * Some buffers are not deallocated from the arena on release, they're held in the cache for later use 
+* Tiny, Small, and Normal sized allocations are all handled differently.
+* Huge allocations (larger than chunk size) are allocated in a special Unpooled PoolChunk
+
+Scenario:
+
+ A long running netty HTTP service sporadically OOMs after several hundred days running in production
+ The service supports a range of message size from 1k (often) -> 100MB (rare)
+ The service uses standard Netty HTTP codes + HttpObjectAggregator
+
+* HTTPObjectAggregator creates a CompositeByteBuffer with component buffers of 8192 bytes (default)
+* CompositeByteBuffer consolidate at every 1024 component parts (default)
+* Leads to large messages generating a series of small allocations and occasional 8MB allocation
+* Deallocation occurs asynchronously, a burst of large messages can lead to high allocation contention
+* The 8MB large allocations lead to new PoolChunk being allocated, as none have capacity available
+* Can lead to PoolArenas having more than 3 PoolChunk allocated, approaching 100% use by all PoolChunks
+* Appears that some PoolChunk are not deallocated, not sure why but perhaps:
+  * Some buffers are cached in the threadlocal, not deallocated (see a lot of PoolChunk w/ 1% usage)
+  * Perhaps under constant load all PoolChunk are in use with new requests, not sure how chunks preferred
+* OOM generally (95%) occurs at huge allocation, unpooled Chunk fails because pooled Chunks consume 100%   
+* OOM occasionally (5%) occurs at point of new Chunk allocation, all memory consumed already
+* Direct memory consumption confirmed by JVisualVM + Buffer Pools plugin
 
 *Usage*:
 
