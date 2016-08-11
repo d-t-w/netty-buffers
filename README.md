@@ -84,11 +84,61 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 
 ## Reproducing 
 
+Start a REPL with max direct memory setting (to control the number of PoolArena)
+
+```bash
+-XX:MaxDirectMemorySize=256M  # with default settings = two PoolArena
+```
+
+Confirm the direct pool arena metrics
+
+```clojure
+(.directArenas (PooledByteBufAllocator/DEFAULT))
+=>
+[#object[io.netty.buffer.PoolArena$DirectArena
+         0x575d73cb
+         "Chunk(s) at 0~25%:
+          none
+          Chunk(s) at 0~50%:
+          none
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          none
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          small subpages:
+          "]
+ #object[io.netty.buffer.PoolArena$DirectArena
+         0x11278407
+         "Chunk(s) at 0~25%:
+          none
+          Chunk(s) at 0~50%:
+          none
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          none
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          small subpages:
+          "]]
+```
+
+You can see, they're empty.
+
 Generate files of varying size:
 
 ```bash
 dd if=/dev/zero of=100MB.file bs=1024k count=100   # 100MB
 ```
+
 
 ## License
 
