@@ -7,7 +7,7 @@ Usage:
 Generate files of varying size:
 
 ```bash
-dd if=/dev/zero of=outputfile.out3 bs=1024k count=100
+dd if=/dev/zero of=100MB.file bs=1024k count=100   i# 100MB
 ```
 
 ## License
