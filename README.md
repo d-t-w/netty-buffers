@@ -156,7 +156,7 @@ A simple server configuaration (HttpCodec, HttpObjectAggregator, SimpleChannelHa
 To verify expected 'normal' pool operation, send a series of 100k msgs to the server
 
 ```bash
-± % for run in {1..1000}                                                                                                                                                                             !10594
+± % for run in {1..10000}                                                                                                                                                                             !10594
 do
   curl -X PUT --data-binary "@100KB.file" 127.0.0.1:3000
 done
@@ -167,11 +167,11 @@ Check the PoolArena metrics
 ```clojure
 ...
 ...
-"complete: 1 chunks, 102400 bytes"
-"complete: 1 chunks, 102400 bytes"
-"complete: 1 chunks, 102400 bytes"
-"complete: 1 chunks, 102400 bytes"
-"complete: 1 chunks, 102400 bytes"
+"complete: 1 msgs, 102400 bytes"
+"complete: 1 msgs, 102400 bytes"
+"complete: 1 msgs, 102400 bytes"
+"complete: 1 msgs, 102400 bytes"
+"complete: 1 msgs, 102400 bytes"
 
 (.directArenas (PooledByteBufAllocator/DEFAULT))
 =>
@@ -219,6 +219,139 @@ My assumption is the 1% consumption represents buffers that are not deallocated 
 
 Regardless if you send 10000 or 1M <100KB messages, the PoolArena metrics will look similar to above. Nice and orderly, no accumulation of chunks, very little memory consumed.
 
+Closing that REPL and starting afresh with another, sending 20 20MB msgs:
+
+```bash
+± % for run in {1..20}                                                                                                                                                                               !10614
+do
+  curl -X PUT --data-binary "@20MB.file" 127.0.0.1:3000
+done
+```
+
+Checking the PoolArena metrics we can see now that we have three PoolChunk in each arena.
+
+At this point all the buffers have been released, but again, I think some are cached and that's where the % usage comes from. Strangely one Chunk has 0% usage and 0 bytes consumed.
+
+Our msgs are not sent in parallel, so I think the multiple chunk allocation is caused by the interplay between small individual CompositeByteBuffer component buffers being allocated and the occasional large consolidated buffer.
+
+```clojure
+...
+...
+"complete: 1 msgs, 20971520 bytes"
+"complete: 1 msgs, 20971520 bytes"
+"complete: 1 msgs, 20971520 bytes"
+"complete: 1 msgs, 20971520 bytes"
+
+(.directArenas (PooledByteBufAllocator/DEFAULT))
+=>
+[#object[io.netty.buffer.PoolArena$DirectArena
+         0x2459350d
+         "Chunk(s) at 0~25%:
+          none
+          Chunk(s) at 0~50%:
+          Chunk(1280c322: 15%, 2351104/16777216)
+          Chunk(2f5493c3: 1%, 32768/16777216)
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          Chunk(122122e7: 0%, 0/16777216)
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          16: (2049: 1/32, offset: 8192, length: 8192, elemSize: 256)
+          small subpages:
+          "]
+ #object[io.netty.buffer.PoolArena$DirectArena
+         0x5eb87aed
+         "Chunk(s) at 0~25%:
+          none
+          Chunk(s) at 0~50%:
+          Chunk(30d47b77: 1%, 131072/16777216)
+          Chunk(3b953c25: 1%, 98304/16777216)
+          Chunk(203807aa: 13%, 2154496/16777216)
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          Chunk(4d24affd: 0%, 0/16777216)
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          16: (2049: 1/32, offset: 8192, length: 8192, elemSize: 256)
+          small subpages:
+          "]]
+```
+
+Sending another 20 large messages shows further PoolChunk fragmentation, now we have 14 across 2 PoolArenas, and none will be deallocated since the all have some % utilization.
+
+```clojure
+(.directArenas (PooledByteBufAllocator/DEFAULT))
+=>
+[#object[io.netty.buffer.PoolArena$DirectArena
+         0x59df51b3
+         "Chunk(s) at 0~25%:
+          none
+          Chunk(s) at 0~50%:
+          Chunk(4f8456b6: 1%, 32768/16777216)
+          Chunk(39480577: 1%, 131072/16777216)
+          Chunk(490ef4f6: 2%, 229376/16777216)
+          Chunk(21092c0a: 1%, 98304/16777216)
+          Chunk(2a9cc7fa: 12%, 1892352/16777216)
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          Chunk(4c55ef7b: 0%, 0/16777216)
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          16: (2049: 1/32, offset: 8192, length: 8192, elemSize: 256)
+          small subpages:
+          "]
+ #object[io.netty.buffer.PoolArena$DirectArena
+         0x6e3fb277
+         "Chunk(s) at 0~25%:
+          none
+          Chunk(s) at 0~50%:
+          Chunk(354f283b: 1%, 65536/16777216)
+          Chunk(b58d320: 2%, 262144/16777216)
+          Chunk(63d9c73d: 1%, 131072/16777216)
+          Chunk(94c20a: 1%, 98304/16777216)
+          Chunk(4c562cd3: 1%, 98304/16777216)
+          Chunk(15a37aa: 6%, 843776/16777216)
+          Chunk(2c97e893: 6%, 884736/16777216)
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          Chunk(a35eb99: 0%, 0/16777216)
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          16: (2049: 1/32, offset: 8192, length: 8192, elemSize: 256)
+          small subpages:
+          "]]
+```
+
+At this point we have sent 40 large 20MB messages in serial to the test service. They have all been released.
+
+We have 14 PoolChunk allocated to PoolArena at a cost of 16MB each, ~ 234MB in total, close to 100% available direct memory.
+
+Sending one more 20MB causes another PoolChunk to be allocated, ~250MB of our 256MB limitation consumed by PoolChunk allocated to PoolArena.
+
+Each 20MB messages also requires a hugeAllocation of the final consolidated ByteBuffer, normally this is supported by an Unpooled PoolChunk that is immediately deallocated on release and never associated to a PoolArena, however at this point we have no direct memory available to allocate this unpooled PoolChunk and we end up with a direct memory OOM at that attempted allocation.
+
+Given that:
+* None of the existing 15 PoolChunk across 2 PoolArenas are ever deallocated, since they all have low % usage
+* Large messages often trigger a new PoolChunk allocation or 'huge' unpooled PoolChunk allocation
+* There is no more capacity for allocating new PoolChunk of either variety
+
+At this point we observe the symptom of intermittent OOM since small messages are handled perfectly well by the existing pool chunks, but anything big enough to trigger a new allocation fails.
 
 ## License
 

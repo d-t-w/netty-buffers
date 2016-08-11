@@ -20,7 +20,7 @@
         (when (instance? LastHttpContent msg)               ;; includes FullHttpMessage (output by HttpObjectAggregator)
           (-> (.writeAndFlush ctx (DefaultHttpResponse. HttpVersion/HTTP_1_1 HttpResponseStatus/OK))
               (.addListener ChannelFutureListener/CLOSE))
-          (prn (str "complete: " @chunks " chunks, " @request-size " bytes"))))
+          (prn (str "complete: " @chunks " msgs, " @request-size " bytes"))))
       (exceptionCaught [^ChannelHandlerContext ctx thr]
         (.printStackTrace thr)
         (-> (.writeAndFlush ctx (DefaultHttpResponse. HttpVersion/HTTP_1_1 HttpResponseStatus/INTERNAL_SERVER_ERROR))
