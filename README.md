@@ -2,12 +2,14 @@
 
 If Derek and Netty is a love story, ByteBuf pooling is the awkward period of confusion that hopefully passes
 
-A had a scenario where the PoolChunks assigned to PoolArena would fill the available direct memory space, never be deallocated, and eventually cause OOM - either when a new PoolChunk is allocated, or when a hugeAllocation occurs. I have a reproducer for any version of netty below 4.0.37.Final (so this source uses 4.0.36-Final).
+A had a scenario where the PoolChunks assigned to PoolArena would fill the available direct memory space, never be deallocated, and eventually cause OOM - either when a new PoolChunk is allocated, or when a hugeAllocation occurs. 
 
-Can no longer reproduce since 4.0.37.Final, fixed by either:
+I have a reproducer for any version of netty below 4.0.37.Final (so this source uses 4.0.36-Final).
 
-https://github.com/netty/netty/pull/5333
-https://github.com/netty/netty/pull/5089 (more likely this one)
+Can no longer reproduce since *4.0.37.Final*, fixed by either:
+
+* https://github.com/netty/netty/pull/5333
+* https://github.com/netty/netty/pull/5089 (more likely this one)
 
 see: "This then could have the effect that PoolChunks are not released / freed in a timely fashion"
 
