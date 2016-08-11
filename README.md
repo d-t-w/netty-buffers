@@ -2,16 +2,16 @@
 
 If Derek and Netty is a love story, ByteBuf pooling is the awkward period of confusion that hopefully passes.
 
-*Goals*:
+## Goals
 
 * Explore PooledByteBufAllocation of direct memory. Pooled heap is analogous but out of scope
 * Replicate behaviour where PoolChunk allocation fills available direct and further allocation OOMs
 
-*Stretch Goal*
+## Stretch Goal
 
 * Turn this into a blog with some diagrams with that paper app, since you bought the pen and all
 
-*A Netty Pooled Memory Primer*:
+## A Netty Pooled Memory Primer
 
 * PooledByteBufAllocator is a jemalloc variant, introduced to counter GC pressure
 * Pooling is optional, direct memory is preferred where available. Not suitable for all scenarios
@@ -26,8 +26,11 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * Huge allocations (larger than chunk size) are allocated in a special Unpooled PoolChunk
 * In normal operation with small messages it's hard to get more than 3 PoolChunk in one PoolArena
 * Generally PoolChunk and buffer allocation / deallocation is reliable
+* Given repeated small fixed size messages handled by one thread on one channel:
+  * All allocation will be in the same PoolArena
+  * Often only small number of buffers allocated / re-used
 
-Scenario:
+## Scenario 1
 
  A long running netty HTTP service sporadically OOMs after several hundred days running in production
 
@@ -36,6 +39,8 @@ Scenario:
  Service uses standard Netty HTTP codes + HttpObjectAggregator
 
  Service transforms requests and writes to Cassandra, peer may be slow, conditions bursty.
+
+ This is not a buffer leak issue, it's a backpressure / slow-peers / pool usage issue.
 
 * HTTPObjectAggregator creates a CompositeByteBuffer with component buffers of 8192 bytes (default)
 * CompositeByteBuffer consolidate at every 1024 component parts (default)
@@ -53,17 +58,18 @@ Scenario:
 * OOM occasionally (5%) occurs at point of new Chunk allocation when all memory consumed already
 * Direct memory consumption confirmed by JVisualVM + Buffer Pools plugin
 
-Realisations:
+*Realisations*
 
  * Buffer pooling probably not suited to this scenarion of mixed message size, fine to turn it off
  * Backpressure a real consideration, no way to avoid 100% memory consumption with no BP and slow peers
 
-Questions:
+*Questions*
 
  * Why do some PoolChunk fail to deallocate / linger on 1% usage?
 
 
-*Usage*:
+
+## Usage
 
 Generate files of varying size:
 
