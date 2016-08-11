@@ -355,7 +355,7 @@ Granted, you might not expect a service contrained to 256MB of direct memory to 
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 Derek Troy-West
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
