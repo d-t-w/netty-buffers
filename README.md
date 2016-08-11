@@ -14,7 +14,8 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 ## A Netty Pooled Memory Primer
 
 * PooledByteBufAllocator is a jemalloc variant, introduced to counter GC pressure
-* Pooling is optional, direct memory is preferred where available. Not suitable for all scenarios
+* Pooling is optional, direct memory is preferred where available. 
+* Pooled not suitable for all scenarios, unpooled heap sometimes better, unpooled direct probably never.
 * Netty provides access to pooled memory via PoolArenas containing PoolChunks and Tiny/Small PoolSubpages
 * PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty
 * Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
@@ -60,16 +61,23 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 
 *Realisations*
 
- * Buffer pooling probably not suited to this scenarion of mixed message size, fine to turn it off
+ * Buffer pooling probably not suited to this scenario of bursty, mixed message size, fine to turn it off
  * Backpressure a real consideration, no way to avoid 100% memory consumption with no BP and slow peers
 
 *Questions*
 
  * Why do some PoolChunk fail to deallocate / linger on 1% usage?
 
+## Scenario 2
+
+ Captured in this ticket related to Yada/Aleph: https://github.com/juxt/yada/issues/75
+
+ Nothing related to my own issue, but I found the ticket when looking for other Pool/OOM issues
+
+ It's Clojure, a couple of the Juxt guys are former colleagues, +ztellman, so why not try and help 
 
 
-## Usage
+## Reproducing 
 
 Generate files of varying size:
 
