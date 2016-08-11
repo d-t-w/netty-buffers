@@ -49,4 +49,4 @@
                                              (->dropping-handler)])))))))
        (.bind)
        (.sync))
-   {:port 3000}))
+   (prn "Server started, port 3000")))
