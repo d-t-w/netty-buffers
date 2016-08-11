@@ -21,7 +21,7 @@ Netty version: 4.1.0-CR3 (mostly because that's what Aleph has as a dependency (
 * Netty provides access to pooled memory via PoolArenas containing PoolChunks and Tiny/Small PoolSubpages
 * PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty
 * The allocation of a PoolChunk to a PoolArena incurrs a consumption of chunksize (likely 16MB) memory 
-* Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
+* The number of PoolArena is defined by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
 * If each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
 * ThreadLocal cache of (some) recently released buf and arena means:
   * One event-loop thread only ever accesses one PoolArena 
@@ -81,8 +81,6 @@ Netty version: 4.1.0-CR3 (mostly because that's what Aleph has as a dependency (
  Captured in this ticket related to Yada/Aleph: https://github.com/juxt/yada/issues/75
 
  Not related to my own issue, but I found the ticket when looking for other Pool/OOM issues
-
- It's Clojure, a couple of the Juxt guys are former colleagues, +ztellman, so why not try and help 
 
 
 ## Reproducing 
@@ -213,7 +211,7 @@ Check the PoolArena metrics
           "]]
 ```
 
-You can see that each Arena only has a single chunk, with very memory consumed
+You can see that each Arena only has a single chunk, with very little memory consumed
 
 My assumption is the 1% consumption represents buffers that are not deallocated on release, rather they are cached in the ThreadLocal for later re-use.
 

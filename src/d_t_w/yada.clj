@@ -1,8 +1,9 @@
-(ns foo.yada
+(ns d-t-w.yada
   (:require [aleph.http :refer [start-server]]
             [yada.yada :refer [resource]]
             [yada.aleph :refer [listener]]
-            [yada.request-body :as request-body]))
+            [yada.request-body :as request-body])
+  (:import [yada.multipart PartConsumer Partial]))
 
 (defrecord MyPartial []
   Partial
