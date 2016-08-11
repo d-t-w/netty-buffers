@@ -7,6 +7,10 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * Explore PooledByteBufAllocation of direct memory. Pooled heap is analogous but out of scope.
 * Replicate behaviour where PoolChunk allocation fills available direct and further allocation OOMs.
 
+*Stretch Goal*
+
+* Turn this into a blog with some diagrams with that paper app, since you bought the pen and all.
+
 *A Netty Pooled Memory Primer*:
 
 * PooledByteBufAllocator is a jemalloc variant, introduced to counter GC pressure
@@ -20,15 +24,18 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
   * Some buffers are not deallocated from the arena on release, ThreadLocal cached for later re-use 
 * Tiny, Small, and Normal sized allocations are all handled differently.
 * Huge allocations (larger than chunk size) are allocated in a special Unpooled PoolChunk
-
 * In normal operation with small messages it's hard to get more than 3 PoolChunk in one PoolArena
 * Generally PoolChunk and buffer allocation / deallocation is reliable
 
 Scenario:
 
  A long running netty HTTP service sporadically OOMs after several hundred days running in production
- The service supports a range of message size from 1k (often) -> 100MB (rare)
- The service uses standard Netty HTTP codes + HttpObjectAggregator
+
+ Service supports a range of message size from 1k (often) -> 100MB (rare)
+
+ Service uses standard Netty HTTP codes + HttpObjectAggregator
+
+ Service transforms requests and writes to Cassandra, peer may be slow, conditions bursty.
 
 * HTTPObjectAggregator creates a CompositeByteBuffer with component buffers of 8192 bytes (default)
 * CompositeByteBuffer consolidate at every 1024 component parts (default)
