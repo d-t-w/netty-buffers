@@ -2,6 +2,14 @@
 
 If my time with Netty has been a love story, ByteBuf pooling is the weird, awkward period of confusion that hopefully passes.
 
+Usage:
+
+Generate files of varying size:
+
+```bash
+dd if=/dev/zero of=outputfile.out3 bs=1024k count=100
+```
+
 ## License
 
 Copyright © 2016 FIXME

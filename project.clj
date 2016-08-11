@@ -1,7 +1,6 @@
-(defproject netty-direct "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+(defproject netty-buffers "0.1.0-SNAPSHOT"
+  :description "Exploring Netty Pooled ByteBuffer Allocation"
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [io.netty/netty-all "4.0.31.Final"]])
+                 [aleph "0.4.1-beta5"]
+                 [bidi "2.0.1"]
+                 [yada "1.1.2"]])

@@ -1,4 +1,4 @@
-(ns netty-direct.core
+(ns d-t-w.netty
   (:import [java.net InetSocketAddress]
            [io.netty.bootstrap ServerBootstrap]
            [io.netty.buffer PooledByteBufAllocator]
@@ -44,5 +44,4 @@
                                           (->dropping-handler)]))))))
       (.bind)
       (.sync))
-  (prn "direct arenas at start:")
-  (map str (.directArenas (PooledByteBufAllocator/DEFAULT))))
+  {:port 8080})
