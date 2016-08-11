@@ -16,8 +16,8 @@ If Derek and Netty is a love story, ByteBuf pooling is the awkward period of con
 * Number of PoolArena define by min of [available direct memory / chunksize / 2 / 3] | [2 \* cores]
 * Means if each PoolArena has no more than 3 PoolChunks then memory consumption should stay under 50% 
 * ThreadLocal cache of recently released buf and arena means:
-** Each thread only ever accesses the same arena
-** Some buffers are not deallocated from the arena on release, they're held in the cache for later use 
+..* Each thread only ever accesses the same arena
+..* Some buffers are not deallocated from the arena on release, they're held in the cache for later use 
 
 *Usage*:
 
