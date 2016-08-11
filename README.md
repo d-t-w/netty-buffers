@@ -162,6 +162,59 @@ do
 done
 ```
 
+Check the PoolArena metrics
+
+```clojure
+...
+...
+"complete: 1 chunks, 102400 bytes"
+"complete: 1 chunks, 102400 bytes"
+"complete: 1 chunks, 102400 bytes"
+"complete: 1 chunks, 102400 bytes"
+"complete: 1 chunks, 102400 bytes"
+
+(.directArenas (PooledByteBufAllocator/DEFAULT))
+=>
+[#object[io.netty.buffer.PoolArena$DirectArena
+         0x4676f4ad
+         "Chunk(s) at 0~25%:
+          Chunk(662c6d27: 1%, 122880/16777216)
+          Chunk(s) at 0~50%:
+          none
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          none
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          16: (2049: 1/32, offset: 8192, length: 8192, elemSize: 256)
+          small subpages:
+          "]
+ #object[io.netty.buffer.PoolArena$DirectArena
+         0x5fb0e218
+         "Chunk(s) at 0~25%:
+          Chunk(2a4a6e9b: 1%, 122880/16777216)
+          Chunk(s) at 0~50%:
+          none
+          Chunk(s) at 25~75%:
+          none
+          Chunk(s) at 50~100%:
+          none
+          Chunk(s) at 75~100%:
+          none
+          Chunk(s) at 100%:
+          none
+          tiny subpages:
+          16: (2049: 1/32, offset: 8192, length: 8192, elemSize: 256)
+          small subpages:
+          "]]
+```
+
+
+
 ## License
 
 Copyright © 2016 FIXME
