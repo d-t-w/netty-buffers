@@ -79,6 +79,7 @@ see: "This then could have the effect that PoolChunks are not released / freed i
   * Where PoolChunks grows and eventually consumes all available direct memory
   * If those PoolChunks are never deallocated (even though the initiating buffers have been released)
     * Can lead to a scenario where unpooled allocation (huge) or further PoolChunk allocation OOMs
+    * GC will not help, all memory is consumed indefinitely by PoolChunks
 
 *Questions*
 
