@@ -26,7 +26,6 @@ see: "This then could have the effect that PoolChunks are not released / freed i
 
 * PooledByteBufAllocator is a jemalloc variant, introduced to counter GC pressure
 * Pooling is optional, direct memory is preferred where available
-* Pooled not suitable for all scenarios, unpooled heap sometimes better, unpooled direct probably never
 * Netty provides access to pooled memory via PoolArenas containing PoolChunks and Tiny/Small PoolSubpages
 * PoolChunk default to 16MB, are allocated within a PoolArena lazily as required, deallocated when empty
 * The allocation of a PoolChunk to a PoolArena incurrs a consumption of chunksize (likely 16MB) memory 
