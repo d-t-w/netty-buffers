@@ -73,7 +73,7 @@ see: "This then could have the effect that PoolChunks are not released / freed i
 
 *Realisations*
 
-* Buffer pooling probably not suited to this scenario of bursty, mixed message size, fine to turn it off
+* Buffer pooling is an optimisation aimed at reducing GC overhead, fine to turn off if that's no concern
 * Backpressure a real consideration, no way to avoid 100% memory consumption with no BP and slow peers
 * Backpressure concern relates to pooled or unpooled, however:
   * Where PoolChunks grows and eventually consumes all available direct memory
